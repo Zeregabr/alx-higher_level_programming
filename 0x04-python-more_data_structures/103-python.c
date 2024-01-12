@@ -1,29 +1,66 @@
-#!/usr/bin/python3
+#include <Python.h>
 
+void print_python_list(PyObject *p);
+void print_python_bytes(PyObject *p);
 
-def roman_to_int(roman_string):
-    """Converts a roman numeral to an integer."""
-    if (not isinstance(roman_string, str) or
-            roman_string is None):
-        return (0)
+/**
+ * print_python_list - Prints basic info about Python lists.
+ * @p: A PyObject list object.
+ */
+void print_python_list(PyObject *p)
+{
+        int size, alloc, i;
+        const char *type;
+        PyListObject *list = (PyListObject *)p;
+        PyVarObject *var = (PyVarObject *)p;
 
-    roman_dict = {
-            "I": 1,
-            "V": 5,
-            "X": 10,
-            "L": 50,
-            "C": 100,
-            "D": 500,
-            "M": 1000
-    }
-    num = 0
+        size = var->ob_size;
+        alloc = list->allocated;
 
-    for i in range(len(roman_string)):
-        if roman_dict.get(roman_string[i], 0) == 0:
-            return (0)
-        if (i != (len(roman_string) - 1) and
-                roman_dict[roman_string[i]] < roman_dict[roman_string[i + 1]]):
-                num += roman_dict[roman_string[i]] * -1
-        else:
-            num += roman_dict[roman_string[i]]
-    return (num)
+        printf("[*] Python list info\n");
+        printf("[*] Size of the Python List = %d\n", size);
+        printf("[*] Allocated = %d\n", alloc);
+
+        for (i = 0; i < size; i++)
+        {
+                type = list->ob_item[i]->ob_type->tp_name;
+                printf("Element %d: %s\n", i, type);
+                if (strcmp(type, "bytes") == 0)
+                        print_python_bytes(list->ob_item[i]);
+        }
+}
+
+/**
+ * print_python_bytes - Prints basic info about Python byte objects.
+ * @p: A PyObject byte object.
+ */
+void print_python_bytes(PyObject *p)
+{
+        unsigned char i, size;
+        PyBytesObject *bytes = (PyBytesObject *)p;
+
+        printf("[.] bytes object info\n");
+        if (strcmp(p->ob_type->tp_name, "bytes") != 0)
+        {
+                printf("  [ERROR] Invalid Bytes Object\n");
+                return;
+        }
+
+        printf("  size: %ld\n", ((PyVarObject *)p)->ob_size);
+        printf("  trying string: %s\n", bytes->ob_sval);
+
+        if (((PyVarObject *)p)->ob_size > 10)
+                size = 10;
+        else
+                size = ((PyVarObject *)p)->ob_size + 1;
+
+        printf("  first %d bytes: ", size);
+        for (i = 0; i < size; i++)
+        {
+                printf("%02hhx", bytes->ob_sval[i]);
+                if (i == (size - 1))
+                        printf("\n");
+                else
+                        printf(" ");
+        }
+}
